@@ -25,7 +25,7 @@ module Damnx509
         san_names: _to_san(subject) + _ask_san
       )
       key_filename = "#{name}/root.key.pem"
-      csr.key.write_encrypted_pem(key_filename, 'aes256', _ask_password)
+      _write_with_password(key_filename, csr.key)
       cert_filename = "#{name}/root.cert.pem"
       ext = []
       crl_uri = CLI.ask('CRL URI?')
@@ -106,10 +106,10 @@ module Damnx509
         subject: subject,
         san_names: _to_san(subject) + _ask_san
       )
+      ext << R509::Cert::Extensions::SubjectAlternativeName.new(value: csr.san)
       Dir.mkdir("#{ca}/issued") unless File.directory?("#{ca}/issued")
-      password = _ask_password
       key_filename = "#{ca}/issued/#{name}.key.pem"
-      csr.key.write_encrypted_pem(key_filename, 'aes256', password)
+      password = _write_with_password(key_filename, csr.key)
       signer = R509::CertificateAuthority::Signer.new(ca_config)
       cert = signer.sign(
         csr: csr,
@@ -119,9 +119,13 @@ module Damnx509
       )
       cert_filename = "#{ca}/issued/#{name}.cert.pem"
       File.write(cert_filename, cert.to_pem)
-      p12_filename = "#{ca}/issued/#{name}.p12"
-      cert.write_pkcs12(p12_filename, password, "#{name} cert+key signed by #{ca}")
-      puts "Wrote #{cert_filename}, #{key_filename}, #{p12_filename}."
+      unless password.empty?
+        p12_filename = "#{ca}/issued/#{name}.p12"
+        cert.write_pkcs12(p12_filename, password, "#{name} cert+key signed by #{ca}")
+        puts "Wrote #{cert_filename}, #{key_filename}, #{p12_filename}."
+      else
+        puts "Wrote #{cert_filename}, #{key_filename}."
+      end
     end
 
     desc 'revoke SERIAL [CA]', 'Revoke a certificate with a given SERIAL'
@@ -166,7 +170,7 @@ module Damnx509
 
     def _ask_san
       result = []
-      while cur = CLI.ask("SAN - Subject Alternative Name (enter one; format: '(DNS|IP|email):value'; empty to #{result.empty? ? 'skip' : 'stop'}):")
+      while cur = CLI.ask("SAN - Subject Alternative Name (enter one; type is automatically recognized, don't write 'DNS' etc.; empty to #{result.empty? ? 'skip' : 'stop'}):")
         break if cur.empty?
         result << cur
       end
@@ -182,7 +186,17 @@ module Damnx509
     end
 
     def _ask_password
-      CLI.ask('Private key password (at least 7 characters):') { |q| q.echo = '*'; q.validate = /.{7,}/ }
+      CLI.ask('Private key password (empty to skip key encryption):') { |q| q.echo = '*' }
+    end
+
+    def _write_with_password(key_filename, key)
+      password = _ask_password
+      if password.empty?
+        key.write_pem(key_filename)
+      else
+        key.write_encrypted_pem(key_filename, 'aes256', password)
+      end
+      password
     end
   end
 end

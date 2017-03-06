@@ -11,11 +11,13 @@ A simple CLI for managing a small X.509 Certificate Authority!
 - It also automatically offers default values from the CA (e.g. you want to default to the same country, city and CRL URI, right?)
 - And automatically builds a PKCS12 (`.p12`) key+cert bundle (useful for browser client certs and WPA2 EAP-TLS).
 - There's also a `revoke` subcommand to update the CRL (don't forget to upload it to the URI mentioned in the certificates).
+- DON'T FORGET TO [REMOVE](https://en.wikipedia.org/wiki/Srm_(Unix)) UNENCRYPTED KEYS IF YOU WRITE THEM
 
 You can use damnx509 to manage a personal CA to sign things like:
 
 - Your [home router](https://lede-project.org/start)'s admin interface (LuCI)
 - Your home router's [WPA2 EAP-TLS network](http://www.blog.10deam.com/2015/01/08/install-freeradius2-on-a-openwrt-router-for-eap-authentication/)
+- Your home NAS's web interface
 - Your personal OpenVPN network
 - Your home server's HTTPS services
 - Client certificates for accessing admin/monitoring/etc. interfaces on your servers
