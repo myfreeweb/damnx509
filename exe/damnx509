@@ -1,0 +1,3 @@
+#!/usr/bin/env ruby
+require 'damnx509'
+Damnx509::CLI.start(ARGV)
