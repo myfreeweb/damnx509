@@ -7,10 +7,10 @@ A simple CLI for managing a small X.509 Certificate Authority!
     - the extended usage thing (e.g. some WPA2 EAP-TLS clients absolutely require it to be set to `clientAuth`, now you don't have to worry about that)
     - Subject Alternative Names (the `openssl` binary only sets that *from the openssl config file*, what the hell)
     - the signature algorithm (RSA 2048/4096 and EC)
-- It also automatically offers default values from the CA (e.g. you want to default to the same country and city, right?)
-- And automatically sets the CRL URI from the CA!
+    - the URI of the CRL
+- It also automatically offers default values from the CA (e.g. you want to default to the same country, city and CRL URI, right?)
 - And automatically builds a PKCS12 (`.p12`) key+cert bundle (useful for browser client certs and WPA2 EAP-TLS).
-- There's also a `revoke` subcommand to update the CRL (don't forget to upload it to that URI.)
+- There's also a `revoke` subcommand to update the CRL (don't forget to upload it to the URI mentioned in the certificates).
 
 You can use damnx509 to manage a personal CA to sign things like:
 

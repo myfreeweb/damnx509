@@ -63,7 +63,8 @@ module Damnx509
         return false
       end
       subj_defaults = Hash[ca_config.ca_cert.cert.subject.to_a.map { |e| [e[0], e[1]] }]
-      ext = (ca_config.ca_cert.cert.extensions || []).select { |e| e.oid == 'crlDistributionPoints' }
+      ext = []
+
       ext << R509::Cert::Extensions::BasicConstraints.new(:ca => false)
       CLI.choose do |menu|
         menu.prompt = 'Certificate usage?'
@@ -80,6 +81,7 @@ module Damnx509
           ext << R509::Cert::Extensions::ExtendedKeyUsage.new(value: ['emailProtection'])
         }
       end
+
       cert_type = 'RSA'
       CLI.choose do |menu|
         menu.prompt = 'Signature algorithm?'
@@ -92,6 +94,11 @@ module Damnx509
         menu.choice('2048') { bit_length = 2048 }
         menu.choice('4096') { bit_length = 4096 }
       end if cert_type == 'RSA'
+
+      crl_ext_p = (ca_config.ca_cert.cert.extensions || []).find { |e| e.oid == 'crlDistributionPoints' }
+      crl_uri = CLI.ask('CRL URI?') { |q| q.default = crl_ext_p && crl_ext_p.value.gsub(/\n[^:]+:/, '').strip }
+      ext << R509::Cert::Extensions::CRLDistributionPoints.new(value: [{type: 'URI', value: crl_uri}]) unless crl_uri.empty?
+
       subject = _ask_subject(subj_defaults)
       csr = R509::CSR.new(
         type: cert_type,
